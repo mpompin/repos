@@ -18,6 +18,12 @@ max_memory = 3000
 batch_size = 512
 temperature_step = 1.5
 
+#EARLY STOPPING
+early_stopping = True
+patience = 10
+patience_count = 0
+best_total_reward = -np.inf
+
 env = environment.Environment(optimal_temperature= (18.0, 24.0), initial_month =0, initial_number_users = 20, initial_rate_data = 30)
 brain = brain.Brain(learning_rate = 1e-5, number_of_actions = number_actions)
 dqn = dqn.DQN(max_memory = max_memory, discount = 0.9)
@@ -29,7 +35,7 @@ train = True
 env.train = train
 model = brain.model
 if env.train:
-    for epoch in np.arange(number_epochs): #epoch = 5 months
+    for epoch in np.arange(1,number_epochs+1): #epoch = 5 months
         total_reward = 0.
         loss = 0.
         new_month = np.random.randint(0, 12)
@@ -40,7 +46,7 @@ if env.train:
         while ((not game_over) and (timestep < 5 * 30 * 24 * 60)): #exploration --> actions randomly, exploitation --> actions predicted by brain
             timestep += 1
             #PLAY NEXT ACTION BY EXPLORATION
-            if np.random.rand() < epsilon:
+            if np.random.rand() <= epsilon:
                 action = np.random.randint(0,number_actions)
                 if action - direction_boundary < 0:
                     direction = -1
@@ -59,7 +65,7 @@ if env.train:
                 energy_ai = np.abs(action - direction_boundary) * temperature_step
 
             # UPDATE ENVIRONMENT AND REACH NEXT STATE
-            next_state, reward, game_over = env.update_env(direction = direction, energy_ai = energy_ai, month = timestep//(30*24*60))
+            next_state, reward, game_over = env.update_env(direction = direction, energy_ai = energy_ai, month = int(timestep / (30 * 24 * 60)))
             total_reward += reward
 
             #STORE THIS NEW TRANSITION INTO THE MEMORY
@@ -72,6 +78,16 @@ if env.train:
             loss += model.train_on_batch(x=inputs, y=targets,)
             current_state = next_state
 
+        if early_stopping:
+            if total_reward > best_total_reward:
+                best_total_reward = total_reward
+                patience_count = 0
+            else:
+                patience_count += 1
+            if patience_count > 10:
+                print(f'Best Total Reward = {best_total_reward}')
+                print(f'Early Stopping - Epoch:{epoch}')
+                break
         #PRINT TRAIN RESULTS
         print('\n')
         print(f'Epoch:{epoch}/{number_epochs}')
@@ -79,4 +95,5 @@ if env.train:
         print(f'Total Energy Spent with an no AI: {env.total_energy_noai}')
 
         #SAVE MODEL
-        model.save(f'model{epoch}.h5')
+    model.save(f'model.h5')
+print(1)

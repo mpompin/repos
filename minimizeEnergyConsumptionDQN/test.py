@@ -14,7 +14,7 @@ direction_boundary = (number_actions - 1) / 2
 temperature_step = 1.5
 
 env = environment.Environment(optimal_temperature= (18.0, 24.0), initial_month =0, initial_number_users = 20, initial_rate_data = 30)
-model = load_model('model100.h5')
+model = load_model('model.h5')
 
 #choose the mode
 train = False
