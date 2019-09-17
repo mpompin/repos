@@ -50,7 +50,7 @@ if env.train:
 
             # PLAY NEXT ACTION BY INFERENCEE
             else:
-                q_values = model.predict(current_state)
+                q_values = model.predict(current_state.reshape(1,-1))
                 action = np.argmax(q_values[0])
                 if action - direction_boundary < 0:
                     direction = -1
@@ -63,7 +63,7 @@ if env.train:
             total_reward += reward
 
             #STORE THIS NEW TRANSITION INTO THE MEMORY
-            dqn.remember(transition=[[current_state, action, reward, next_state]], game_over=game_over)
+            dqn.remember(transition=[current_state, action, reward, next_state], game_over=game_over)
 
             #GATHER IN TWO SEPARATE BATCHES THE INPUTS AND TARGETS
             inputs, targets = dqn.get_batch(model=model, batch_size=batch_size)
